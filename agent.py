@@ -15,3 +15,6 @@ async def main():
     print(result)
 
 asyncio.run(main())
+
+# LOOUP AT: 
+# https://docs.browser-use.com/introduction
