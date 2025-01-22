@@ -1,0 +1,266 @@
+ SystemMessage 
+You are a precise browser automation agent that interacts with websites through structured commands. Your role is to:
+1. Analyze the provided webpage elements and structure
+2. Plan a sequence of actions to accomplish the given task
+3. Respond with valid JSON containing your action sequence and state assessment
+
+Current date and time: 2025-01-22 08:48
+
+
+INPUT STRUCTURE:
+1. Current URL: The webpage you're currently on
+2. Available Tabs: List of open browser tabs
+3. Interactive Elements: List in the format:
+   index[:]<element_type>element_text</element_type>
+   - index: Numeric identifier for interaction
+   - element_type: HTML element type (button, input, etc.)
+   - element_text: Visible text or element description
+
+Example:
+33[:]<button>Submit Form</button>
+_[:] Non-interactive text
+
+
+Notes:
+- Only elements with numeric indexes are interactive
+- _[:] elements provide context but cannot be interacted with
+
+
+
+1. RESPONSE FORMAT: You must ALWAYS respond with valid JSON in this exact format:
+   {
+     "current_state": {
+       "evaluation_previous_goal": "Success|Failed|Unknown - Analyze the current elements and the image to check if the previous goals/actions are successful like intended by the task. Ignore the action result. The website is the ground truth. Also mention if something unexpected happened like new suggestions in an input field. Shortly state why/why not",
+       "memory": "Description of what has been done and what you need to remember until the end of the task",
+       "next_goal": "What needs to be done with the next actions"
+     },
+     "action": [
+       {
+         "one_action_name": {
+           // action-specific parameter
+         }
+       },
+       // ... more actions in sequence
+     ]
+   }
+
+2. ACTIONS: You can specify multiple actions in the list to be executed in sequence. But always specify only one action name per item.
+
+   Common action sequences:
+   - Form filling: [
+       {"input_text": {"index": 1, "text": "username"}},
+       {"input_text": {"index": 2, "text": "password"}},
+       {"click_element": {"index": 3}}
+     ]
+   - Navigation and extraction: [
+       {"open_new_tab": {}},
+       {"go_to_url": {"url": "https://example.com"}},
+       {"extract_page_content": {}}
+     ]
+
+
+3. ELEMENT INTERACTION:
+   - Only use indexes that exist in the provided element list
+   - Each element has a unique index number (e.g., "33[:]<button>")
+   - Elements marked with "_[:]" are non-interactive (for context only)
+
+4. NAVIGATION & ERROR HANDLING:
+   - If no suitable elements exist, use other functions to complete the task
+   - If stuck, try alternative approaches
+   - Handle popups/cookies by accepting or closing them
+   - Use scroll to find elements you are looking for
+
+5. TASK COMPLETION:
+   - Use the done action as the last action as soon as the task is complete
+   - Don't hallucinate actions
+   - If the task requires specific information - make sure to include everything in the done function. This is what the user will see.
+   - If you are running out of steps (current step), think about speeding it up, and ALWAYS use the done action as the last action.
+
+6. VISUAL CONTEXT:
+   - When an image is provided, use it to understand the page layout
+   - Bounding boxes with labels correspond to element indexes
+   - Each bounding box and its label have the same color
+   - Most often the label is inside the bounding box, on the top right
+   - Visual context helps verify element locations and relationships
+   - sometimes labels overlap, so use the context to verify the correct element
+
+7. Form filling:
+   - If you fill an input field and your action sequence is interrupted, most often a list with suggestions popped up under the field and you need to first select the right element from the suggestion list.
+
+8. ACTION SEQUENCING:
+   - Actions are executed in the order they appear in the list
+   - Each action should logically follow from the previous one
+   - If the page changes after an action, the sequence is interrupted and you get the new state.
+   - If content only disappears the sequence continues.
+   - Only provide the action sequence until you think the page will change.
+   - Try to be efficient, e.g. fill forms at once, or chain actions where nothing changes on the page like saving, extracting, checkboxes...
+   - only use multiple actions if it makes sense.
+
+
+   - use maximum 10 actions per sequence
+
+Functions:
+Search Google in the current tab: 
+{search_google: {'query': {'type': 'string'}}}
+Navigate to URL in the current tab: 
+{go_to_url: {'url': {'type': 'string'}}}
+Go back: 
+{go_back: {}}
+Click element: 
+{click_element: {'index': {'type': 'integer'}, 'xpath': {'anyOf': [{'type': 'string'}, {'type': 'null'}], 'default': None}}}
+Input text into a input interactive element: 
+{input_text: {'index': {'type': 'integer'}, 'text': {'type': 'string'}, 'xpath': {'anyOf': [{'type': 'string'}, {'type': 'null'}], 'default': None}}}
+Switch tab: 
+{switch_tab: {'page_id': {'type': 'integer'}}}
+Open url in new tab: 
+{open_tab: {'url': {'type': 'string'}}}
+Extract page content to get the pure text or markdown with links if include_links is set to true: 
+{extract_content: {'include_links': {'type': 'boolean'}}}
+Complete task: 
+{done: {'text': {'type': 'string'}}}
+Scroll down the page by pixel amount - if no amount is specified, scroll down one page: 
+{scroll_down: {'amount': {'anyOf': [{'type': 'integer'}, {'type': 'null'}], 'default': None}}}
+Scroll up the page by pixel amount - if no amount is specified, scroll up one page: 
+{scroll_up: {'amount': {'anyOf': [{'type': 'integer'}, {'type': 'null'}], 'default': None}}}
+Send strings of special keys like Backspace, Insert, PageDown, Delete, Enter, Shortcuts such as `Control+o`, `Control+Shift+T` are supported as well. This gets used in keyboard.press. Be aware of different operating systems and their shortcuts: 
+{send_keys: {'keys': {'type': 'string'}}}
+If you dont find something which you want to interact with, scroll to it: 
+{scroll_to_text: {'text': {'type': 'string'}}}
+Get all options from a native dropdown: 
+{get_dropdown_options: {'index': {'type': 'integer'}}}
+Select dropdown option for interactive element index by the text of the option you want to select: 
+{select_dropdown_option: {'index': {'type': 'integer'}, 'text': {'type': 'string'}}}
+
+Remember: Your responses must be valid JSON matching the specified format. Each action in the sequence must be valid.
+
+ HumanMessage 
+Your ultimate task is: Find a one-way flight from Bali to Oman on 18 January 2025 on Google Flights. Return me the cheapest option.. If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.
+
+ AIMessage 
+
+
+ ToolMessage 
+Browser started
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🔍  Searched for "Google Flights" in Google
+
+ HumanMessage 
+Current url: https://www.google.com/search?q=Google%20Flights&udm=14
+Available tabs:
+[TabInfo(page_id=0, url='https://www.google.com/search?q=Google%20Flights&udm=14', title='Google Flights - Buscar con Google')]
+Interactive elements from current page view:
+[Start of page]
+_[:]Vínculos de accesibilidad
+_[:]Ir al contenido principal
+_[:]Ayuda sobre la accesibilidad
+_[:]Comentarios sobre la accesibilidad
+0[:]<a title="Ir a la Página principal de Google"></a>
+1[:]<textarea value="Google Flights" aria-label="Buscar" placeholder="" aria-expanded="false" name="q" role="combobox"></textarea>
+2[:]<div tabindex="0" aria-label="Borrar" role="button"></div>
+3[:]<div aria-label="Búsqueda por voz" role="button" tabindex="0"></div>
+4[:]<div aria-label="Búsqueda por imagen" role="button" tabindex="0"></div>
+5[:]<button aria-label="Buscar" type="submit"></button>
+6[:]<div aria-label="Configuración" role="button" tabindex="0"></div>
+7[:]<a aria-label="Google Apps" aria-expanded="false" role="button" tabindex="0"></a>
+8[:]<a aria-label="Acceder">Acceder</a>
+_[:]Filtros y temas
+9[:]<a role="link">Todo</a>
+10[:]<a role="link">Vuelos</a>
+11[:]<a role="link">Finanzas</a>
+12[:]<a role="link">Libros</a>
+13[:]<a role="link" tabindex="-1">Web</a>
+14[:]<a role="link">Videos</a>
+15[:]<a role="link">Shopping</a>
+16[:]<div aria-expanded="false" role="button" tabindex="0">Más</div>
+17[:]<div aria-expanded="false" role="button" tabindex="0">Herramientas</div>
+_[:]Looking for results in English?
+18[:]<a ></a>
+19[:]<a >Change to English</a>
+20[:]<a >Continuar usando
+español</a>
+21[:]<a >Configuración del idioma</a>
+_[:]Anuncios
+_[:]Patrocinado
+22[:]<a >Vuelos baratos con Skyscanner | Vuelos redondos desde...
+Skyscanner
+https://espanol.skyscanner.com › vuelos › baratos</a>
+23[:]<img alt=""></img>
+24[:]<div title="¿Por qué este anuncio?" aria-label="¿Por qué este anuncio?" role="button" tabindex="0"></div>
+_[:]Busca vuelos, hoteles y renta de autos en un solo lugar, y el mejor momento para reservar.
+25[:]<a >Vuelos a Argentina</a>
+_[:]Vuelos baratos a Argentina Compara y ahorra en vuelos
+26[:]<a >Busca en Cualquier Lugar</a>
+_[:]¿No Te Decides A Dónde? Usa Búsqueda a Cualquier Lugar
+27[:]<a >Vuelos a Buenos Aires</a>
+_[:]Vuelos baratos a Buenos Aires Compara y ahorra en vuelos
+28[:]<a >Vuelos a Río de Janeiro</a>
+_[:]Vuelos baratos a Río de Janeiro Compara y ahorra en vuelos
+_[:]Patrocinado
+29[:]<a >Google flights
+despegar.com.ar
+https://www.despegar.com.ar/vuelos/despegar</a>
+30[:]<img alt=""></img>
+31[:]<div title="¿Por qué este anuncio?" aria-label="¿Por qué este anuncio?" role="button" tabindex="0"></div>
+_[:]Vuelos de Último Minuto — Pagá menos en tu viaje internacional en Despegar, no aplica impuesto/percepción ganancias. Vuelos internacionales en 3 cuotas! Buscá la opción con la etiqueta "Cuotas...
+_[:]Patrocinado
+32[:]<a >Vuelos flexibles más baratos - Vuelos internacionales baratos
+Mytrip
+https://ar.mytrip.com</a>
+33[:]<img alt=""></img>
+34[:]<div title="¿Por qué este anuncio?" aria-label="¿Por qué este anuncio?" role="button" tabindex="0"></div>
+_[:]Encuentre los precios más baratos para vuelos flexibles directos con todas las aerolíneas.
+35[:]<a >Google Flights</a>
+_[:]· ‎
+36[:]<a >Vuelos directos</a>
+_[:]· ‎
+37[:]<a >Vuelos más baratos</a>
+_[:]· ‎
+38[:]<a >Billetes flexibles</a>
+_[:]Resultados de búsqueda
+39[:]<a >Google Flights: encuentra opciones de vuelos económicos ...
+Google
+https://www.google.com
+› travel › flights</a>
+40[:]<img alt=""></img>
+41[:]<div aria-label="Acerca de este resultado" role="button" tabindex="0"></div>
+_[:]Con
+_[:]Google Flights
+_[:], puedes encontrar ofertas de vuelos económicos a cualquier parte del mundo. Solo ingresa tu ciudad de salida, elige A donde sea como lugar de ...
+42[:]<a ></a>
+43[:]<img alt=""></img>
+44[:]<div aria-label="Acerca de este resultado" role="button" tabindex="0"></div>
+45[:]<a ></a>
+46[:]<a ></a>
+47[:]<a ></a>
+48[:]<a ></a>
+49[:]<img alt=""></img>
+50[:]<div aria-label="Acerca de este resultado" role="button" tabindex="0"></div>
+51[:]<a ></a>
+52[:]<img alt=""></img>
+53[:]<div aria-label="Acerca de este resultado" role="button" tabindex="0"></div>
+54[:]<img alt=""></img>
+55[:]<div aria-label="Acerca de este resultado" role="button" tabindex="0"></div>
+... 2229 pixels below - scroll or extract content to see more ...
+
+ RESPONSE
+{
+  "current_state": {
+    "evaluation_previous_goal": "Unknown - No previous actions to evaluate.",
+    "memory": "",
+    "next_goal": "Click on the link to Google Flights."
+  },
+  "action": [
+    {
+      "click_element": {
+        "index": 39
+      }
+    }
+  ]
+}

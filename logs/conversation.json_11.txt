@@ -1,0 +1,343 @@
+ SystemMessage 
+You are a precise browser automation agent that interacts with websites through structured commands. Your role is to:
+1. Analyze the provided webpage elements and structure
+2. Plan a sequence of actions to accomplish the given task
+3. Respond with valid JSON containing your action sequence and state assessment
+
+Current date and time: 2025-01-22 08:48
+
+
+INPUT STRUCTURE:
+1. Current URL: The webpage you're currently on
+2. Available Tabs: List of open browser tabs
+3. Interactive Elements: List in the format:
+   index[:]<element_type>element_text</element_type>
+   - index: Numeric identifier for interaction
+   - element_type: HTML element type (button, input, etc.)
+   - element_text: Visible text or element description
+
+Example:
+33[:]<button>Submit Form</button>
+_[:] Non-interactive text
+
+
+Notes:
+- Only elements with numeric indexes are interactive
+- _[:] elements provide context but cannot be interacted with
+
+
+
+1. RESPONSE FORMAT: You must ALWAYS respond with valid JSON in this exact format:
+   {
+     "current_state": {
+       "evaluation_previous_goal": "Success|Failed|Unknown - Analyze the current elements and the image to check if the previous goals/actions are successful like intended by the task. Ignore the action result. The website is the ground truth. Also mention if something unexpected happened like new suggestions in an input field. Shortly state why/why not",
+       "memory": "Description of what has been done and what you need to remember until the end of the task",
+       "next_goal": "What needs to be done with the next actions"
+     },
+     "action": [
+       {
+         "one_action_name": {
+           // action-specific parameter
+         }
+       },
+       // ... more actions in sequence
+     ]
+   }
+
+2. ACTIONS: You can specify multiple actions in the list to be executed in sequence. But always specify only one action name per item.
+
+   Common action sequences:
+   - Form filling: [
+       {"input_text": {"index": 1, "text": "username"}},
+       {"input_text": {"index": 2, "text": "password"}},
+       {"click_element": {"index": 3}}
+     ]
+   - Navigation and extraction: [
+       {"open_new_tab": {}},
+       {"go_to_url": {"url": "https://example.com"}},
+       {"extract_page_content": {}}
+     ]
+
+
+3. ELEMENT INTERACTION:
+   - Only use indexes that exist in the provided element list
+   - Each element has a unique index number (e.g., "33[:]<button>")
+   - Elements marked with "_[:]" are non-interactive (for context only)
+
+4. NAVIGATION & ERROR HANDLING:
+   - If no suitable elements exist, use other functions to complete the task
+   - If stuck, try alternative approaches
+   - Handle popups/cookies by accepting or closing them
+   - Use scroll to find elements you are looking for
+
+5. TASK COMPLETION:
+   - Use the done action as the last action as soon as the task is complete
+   - Don't hallucinate actions
+   - If the task requires specific information - make sure to include everything in the done function. This is what the user will see.
+   - If you are running out of steps (current step), think about speeding it up, and ALWAYS use the done action as the last action.
+
+6. VISUAL CONTEXT:
+   - When an image is provided, use it to understand the page layout
+   - Bounding boxes with labels correspond to element indexes
+   - Each bounding box and its label have the same color
+   - Most often the label is inside the bounding box, on the top right
+   - Visual context helps verify element locations and relationships
+   - sometimes labels overlap, so use the context to verify the correct element
+
+7. Form filling:
+   - If you fill an input field and your action sequence is interrupted, most often a list with suggestions popped up under the field and you need to first select the right element from the suggestion list.
+
+8. ACTION SEQUENCING:
+   - Actions are executed in the order they appear in the list
+   - Each action should logically follow from the previous one
+   - If the page changes after an action, the sequence is interrupted and you get the new state.
+   - If content only disappears the sequence continues.
+   - Only provide the action sequence until you think the page will change.
+   - Try to be efficient, e.g. fill forms at once, or chain actions where nothing changes on the page like saving, extracting, checkboxes...
+   - only use multiple actions if it makes sense.
+
+
+   - use maximum 10 actions per sequence
+
+Functions:
+Search Google in the current tab: 
+{search_google: {'query': {'type': 'string'}}}
+Navigate to URL in the current tab: 
+{go_to_url: {'url': {'type': 'string'}}}
+Go back: 
+{go_back: {}}
+Click element: 
+{click_element: {'index': {'type': 'integer'}, 'xpath': {'anyOf': [{'type': 'string'}, {'type': 'null'}], 'default': None}}}
+Input text into a input interactive element: 
+{input_text: {'index': {'type': 'integer'}, 'text': {'type': 'string'}, 'xpath': {'anyOf': [{'type': 'string'}, {'type': 'null'}], 'default': None}}}
+Switch tab: 
+{switch_tab: {'page_id': {'type': 'integer'}}}
+Open url in new tab: 
+{open_tab: {'url': {'type': 'string'}}}
+Extract page content to get the pure text or markdown with links if include_links is set to true: 
+{extract_content: {'include_links': {'type': 'boolean'}}}
+Complete task: 
+{done: {'text': {'type': 'string'}}}
+Scroll down the page by pixel amount - if no amount is specified, scroll down one page: 
+{scroll_down: {'amount': {'anyOf': [{'type': 'integer'}, {'type': 'null'}], 'default': None}}}
+Scroll up the page by pixel amount - if no amount is specified, scroll up one page: 
+{scroll_up: {'amount': {'anyOf': [{'type': 'integer'}, {'type': 'null'}], 'default': None}}}
+Send strings of special keys like Backspace, Insert, PageDown, Delete, Enter, Shortcuts such as `Control+o`, `Control+Shift+T` are supported as well. This gets used in keyboard.press. Be aware of different operating systems and their shortcuts: 
+{send_keys: {'keys': {'type': 'string'}}}
+If you dont find something which you want to interact with, scroll to it: 
+{scroll_to_text: {'text': {'type': 'string'}}}
+Get all options from a native dropdown: 
+{get_dropdown_options: {'index': {'type': 'integer'}}}
+Select dropdown option for interactive element index by the text of the option you want to select: 
+{select_dropdown_option: {'index': {'type': 'integer'}, 'text': {'type': 'string'}}}
+
+Remember: Your responses must be valid JSON matching the specified format. Each action in the sequence must be valid.
+
+ HumanMessage 
+Your ultimate task is: Find a one-way flight from Bali to Oman on 18 January 2025 on Google Flights. Return me the cheapest option.. If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.
+
+ AIMessage 
+
+
+ ToolMessage 
+Browser started
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🔍  Searched for "Google Flights" in Google
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 39: Google Flights: encuentra opciones de vuelos económicos ...
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: ⌨️  Input "Bali" into index 45
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 48:
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: ⌨️  Input "Oman" into index 46
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 58:
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🔍  Scrolled to text: 18
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 85: 18
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 43:
+
+ HumanMessage 
+Current url: https://www.google.com/travel/flights?tfs=CBwQARoRag8IAxILL2cvMTIxaHhoMWoaEXIPCAMSCy9nLzEyMWh4aDFqQAFIAXABggELCP___________wGYAQE&tfu=KgIIAw&hl=es-419
+Available tabs:
+[TabInfo(page_id=0, url='https://www.google.com/travel/flights?tfs=CBwQARoRag8IAxILL2cvMTIxaHhoMWoaEXIPCAMSCy9nLzEyMWh4aDFqQAFIAXABggELCP___________wGYAQE&tfu=KgIIAw&hl=es-419', title='Google\xa0Flights: encuentra opciones de vuelos económicos y sigue precios')]
+Interactive elements from current page view:
+[Start of page]
+0[:]<div aria-expanded="false" aria-label="Menú principal" role="button" tabindex="0"></div>
+1[:]<a aria-label="Google"></a>
+_[:]Ir al contenido principal
+_[:]Comentarios sobre la accesibilidad
+2[:]<button role="link">Viajes</button>
+3[:]<button role="link">Explorar</button>
+4[:]<button role="link">Vuelos</button>
+5[:]<button role="link">Hoteles</button>
+6[:]<button role="link">Alquileres de vacaciones</button>
+7[:]<button aria-label="Cambiar de apariencia" aria-expanded="false"></button>
+_[:]Cambiar de apariencia
+8[:]<a aria-label="Google Apps" aria-expanded="false" role="button" tabindex="0"></a>
+9[:]<a aria-label="Acceder">Acceder</a>
+10[:]<a aria-label="Cuenta, fila 1 de 5 y columna 1 de 3 en la sección primera (abre una pestaña nueva)">Cuenta</a>
+11[:]<a aria-label="Búsqueda, fila 1 de 5 y columna 2 de 3 en la sección primera (abre una pestaña nueva)">Búsqueda</a>
+12[:]<a aria-label="Maps, fila 1 de 5 y columna 3 de 3 en la sección primera (abre una pestaña nueva)">Maps</a>
+13[:]<a aria-label="YouTube, fila 2 de 5 y columna 1 de 3 en la sección primera (abre una pestaña nueva)">YouTube</a>
+14[:]<a aria-label="Noticias, fila 2 de 5 y columna 2 de 3 en la sección primera (abre una pestaña nueva)">Noticias</a>
+15[:]<a aria-label="Gmail, fila 2 de 5 y columna 3 de 3 en la sección primera (abre una pestaña nueva)">Gmail</a>
+16[:]<a aria-label="Meet, fila 3 de 5 y columna 1 de 3 en la sección primera (abre una pestaña nueva)">Meet</a>
+17[:]<a aria-label="Chat, fila 3 de 5 y columna 2 de 3 en la sección primera (abre una pestaña nueva)">Chat</a>
+18[:]<a aria-label="Contactos, fila 3 de 5 y columna 3 de 3 en la sección primera (abre una pestaña nueva)">Contactos</a>
+19[:]<a aria-label="Drive, fila 4 de 5 y columna 1 de 3 en la sección primera (abre una pestaña nueva)">Drive</a>
+20[:]<a aria-label="Calendario, fila 4 de 5 y columna 2 de 3 en la sección primera (abre una pestaña nueva)">Calendario</a>
+21[:]<a aria-label="Play, fila 4 de 5 y columna 3 de 3 en la sección primera (abre una pestaña nueva)">Play</a>
+22[:]<a aria-label="Traductor, fila 5 de 5 y columna 1 de 3 en la sección primera (abre una pestaña nueva)">Traductor</a>
+23[:]<a aria-label="Fotos, fila 5 de 5 y columna 2 de 3 en la sección primera (abre una pestaña nueva)">Fotos</a>
+24[:]<a aria-label="Shopping, fila 5 de 5 y columna 3 de 3 en la sección primera (abre una pestaña nueva)">Shopping</a>
+25[:]<a aria-label="Google Finance, fila 1 de 6 y columna 1 de 3 en la sección segundo (abre una pestaña nueva)">Google Finance</a>
+26[:]<a aria-label="Documentos, fila 1 de 6 y columna 2 de 3 en la sección segundo (abre una pestaña nueva)">Documentos</a>
+27[:]<a aria-label="Hojas de cálculo, fila 1 de 6 y columna 3 de 3 en la sección segundo (abre una pestaña nueva)">Hojas de cálculo</a>
+28[:]<a aria-label="Presentaciones, fila 2 de 6 y columna 1 de 3 en la sección segundo (abre una pestaña nueva)">Presentaciones</a>
+29[:]<a aria-label="Libros, fila 2 de 6 y columna 2 de 3 en la sección segundo (abre una pestaña nueva)">Libros</a>
+30[:]<a aria-label="Blogger, fila 2 de 6 y columna 3 de 3 en la sección segundo (abre una pestaña nueva)">Blogger</a>
+31[:]<a aria-label="Google Keep, fila 3 de 6 y columna 1 de 3 en la sección segundo (abre una pestaña nueva)">Google Keep</a>
+32[:]<a aria-label="Earth, fila 3 de 6 y columna 2 de 3 en la sección segundo (abre una pestaña nueva)">Earth</a>
+33[:]<a aria-label="Guardado, fila 3 de 6 y columna 3 de 3 en la sección segundo (abre una pestaña nueva)">Guardado</a>
+34[:]<a aria-label="Arte y cultura, fila 4 de 6 y columna 1 de 3 en la sección segundo (abre una pestaña nueva)">Arte y cultura</a>
+35[:]<a aria-label="Google Ads, fila 4 de 6 y columna 2 de 3 en la sección segundo (abre una pestaña nueva)">Google Ads</a>
+36[:]<a aria-label="Merchant Center, fila 4 de 6 y columna 3 de 3 en la sección segundo (abre una pestaña nueva)">Merchant Center</a>
+37[:]<a aria-label="Viajes, fila 5 de 6 y columna 1 de 3 en la sección segundo (abre una pestaña nueva)">Viajes</a>
+38[:]<a aria-label="Formularios, fila 5 de 6 y columna 2 de 3 en la sección segundo (abre una pestaña nueva)">Formularios</a>
+39[:]<a aria-label="Chrome Web Store, fila 5 de 6 y columna 3 de 3 en la sección segundo (abre una pestaña nueva)">Chrome Web Store</a>
+40[:]<a aria-label="Google Analytics, fila 6 de 6 y columna 1 de 3 en la sección segundo (abre una pestaña nueva)"></a>
+41[:]<a aria-label="Más productos de Google (abre una pestaña nueva)"></a>
+_[:]Vuelos
+_[:]Búsqueda de vuelos
+42[:]<div role="combobox" tabindex="0" aria-expanded="false">Ida y vuelta</div>
+43[:]<button aria-label="1 pasajero">1</button>
+44[:]<label tabindex="-1">Adultos</label>
+45[:]<button aria-label="Quitar adulto"></button>
+_[:]Quitar adulto
+_[:]1
+46[:]<button aria-label="Agregar adulto"></button>
+_[:]Agregar adulto
+47[:]<label >Niños
+de entre 2 y 11 años
+De 2 a 11 años</label>
+48[:]<button aria-label="Quitar niño"></button>
+_[:]Quitar niño
+_[:]0
+49[:]<button aria-label="Agregar niño"></button>
+_[:]Agregar niño
+50[:]<label >Niños entre 3 y 12 meses
+con asiento</label>
+51[:]<button aria-label="Quitar niño con asiento"></button>
+_[:]Quitar niño con asiento
+_[:]0
+52[:]<button aria-label="Agregar niño con asiento"></button>
+_[:]Agregar niño con asiento
+53[:]<label >Niños entre 3 y 12 meses
+sin asiento</label>
+54[:]<button aria-label="Quitar niño sin asiento"></button>
+_[:]Quitar niño sin asiento
+_[:]0
+55[:]<button aria-label="Agregar niño sin asiento"></button>
+_[:]Agregar niño sin asiento
+56[:]<button >Listo</button>
+57[:]<button >Cancelar</button>
+58[:]<div role="combobox" tabindex="0" aria-expanded="false">Clase turista</div>
+59[:]<input type="text" value="Mar del Plata" role="combobox" aria-expanded="false" aria-label="¿Desde dónde?"></input>
+_[:]¿A dónde quieres ir?
+60[:]<input type="text" placeholder="Salida" aria-label="Salida"></input>
+61[:]<input type="text" placeholder="Retorno" aria-label="Retorno"></input>
+_[:]Explorar
+_[:]Encuentra vuelos económicos de Mar del Plata a cualquier lugar
+62[:]<span aria-label="Más información sobre los vuelos sugeridos" role="button" tabindex="0"></span>
+_[:]Mar del Plata
+_[:]Buenos Aires
+63[:]<button tabindex="-1">Explorar destinos</button>
+_[:]Herramientas útiles para encontrar las mejores ofertas
+64[:]<div tabindex="0" role="button">Encuentra los días más económicos para volar</div>
+65[:]<div tabindex="0" role="button"></div>
+66[:]<div tabindex="0" role="button"></div>
+_[:]Herramientas útiles para elegir las fechas de tu viaje
+... 1800 pixels below - scroll or extract content to see more ...
+
+ RESPONSE
+{
+  "current_state": {
+    "evaluation_previous_goal": "Unknown - No previous actions to evaluate.",
+    "memory": "Selected the departure date.",
+    "next_goal": "Click the button to complete the passenger selection."
+  },
+  "action": [
+    {
+      "click_element": {
+        "index": 56
+      }
+    }
+  ]
+}
